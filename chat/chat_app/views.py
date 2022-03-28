@@ -4,19 +4,18 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Room,Message
+from .models import Room
 from .serializers import RoomsListSerializer, MessageCreateSerializer,RegistrationSerializer,RoomCreateSerializer
 
 from .service import get_message
 from rest_framework.permissions import IsAuthenticated
 
-from django.contrib.auth.models import User
 
 from rest_framework.authtoken.models import Token
 
 
 class RoomListView(APIView):
-    #permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         rooms = Room.objects.all()
@@ -35,10 +34,11 @@ class RoomDetailsView(APIView):
         return Response(response.data)
 
 class MessageCreateView(APIView):
-    #permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
 
     """Добавление сообщения"""
     def post(self, request,room_name):
+
         room_id = Room.objects.get(room_name=room_name).id
         request.data['room_name'] = room_id
         i = Token.objects.get(key=request.data['sender']).user
@@ -75,20 +75,16 @@ class RegistrationView(APIView):
 
 
 class RoomCreateView(APIView):
-    #permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
 
     def post(self, request,):
-        room_data = RoomCreateSerializer(data=request.data)
 
+
+        room_data = RoomCreateSerializer(data=request.data)
         if room_data.is_valid():
             room_data.save()
             return Response(room_data.data)
         return Response(room_data.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class RoomListPrivate(APIView):
-    #получить список личных групп
-    def get(self,request):
-        pass
 
 
-#Обдумать механизм привязки к комнате(может на стороне клиента это реализовать)
