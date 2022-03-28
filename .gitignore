@@ -1,5 +1,5 @@
 venv/
 db.sqlite3
 __pycache__/
-.env
 .idea/
+click_example_repo.egg-info/
