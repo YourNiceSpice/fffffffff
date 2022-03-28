@@ -1,9 +1,12 @@
+import sys
+
 import service
 import click
 import dotenv
 import os
 
 class Chatty:
+
     host = ''
     current_chat = ''
     token = ''
@@ -23,20 +26,20 @@ class Chatty:
         os.environ["TOKEN"] = token
         dotenv.set_key(self.dotenv_file, "TOKEN", os.environ["TOKEN"])
 
-    def set_current_chat(self):
-        ''''''
-    # def set_config(self, key, value):
-    #     self.config[key] = value
-    #     if self.verbose:
-    #         click.echo(f"  config[{key}] = {value}", file=sys.stderr)
-    #
-    # def __repr__(self):
-    #     return f"<Repo {self.home}>"
+    def set_current_chat(self,current):
+        os.environ["C_CHAT"] = current
+        dotenv.set_key(self.dotenv_file, "C_CHAT", os.environ["C_CHAT"])
+
 
 
 S = Chatty()
 
-
+def is_auth():
+    if not S.token:
+        click.echo("Войдите или зарегистрируйтесь.\nrepo signup --help\nrepo login --help")
+        sys.exit()
+    else:
+        return
 
 @click.group()
 def cli():
@@ -45,46 +48,10 @@ def cli():
     This tool is supposed to look like a distributed version control
     system to show how something like this can be structured.
     """
-    # Create a repo object and remember it as as the context object.  From
-    # this point onwards other commands can refer to it by using the
-    # @pass_repo decorator.
-#TODO test connection
-    #S.set_connection()
-
-    # ctx.obj = Repo(os.path.abspath(repo_home))
-    # ctx.obj.verbose = verbose
-    # for key, value in config:
-    #     ctx.obj.set_config(key, value)
-
-
-# @cli.command()
-# @click.argument("src")
-# @click.argument("dest", required=False)
-# @click.option(
-#     "--shallow/--deep",
-#     default=False,
-#     help="Makes a checkout shallow or deep.  Deep by default.",
-# )
-# @click.option(
-#     "--rev", "-r", default="HEAD", help="Clone a specific revision instead of HEAD."
-# )
-# def clone(repo, src, dest, shallow, rev):
-#     """Clones a repository.
-#     This will clone the repository at SRC into the folder DEST.  If DEST
-#     is not provided this will automatically use the last path component
-#     of SRC and create that folder.
-#     """
-#     if dest is None:
-#         dest = posixpath.split(src)[-1] or "."
-#     click.echo(f"Cloning repo {src} to {os.path.basename(dest)}")
-#     repo.home = dest
-#     if shallow:
-#         click.echo("Making shallow checkout")
-#     click.echo(f"Checking out revision {rev}")
-
 @cli.command()
 def list():
 
+    is_auth()
     res = service.get_list(S.host,S.token)
     click.echo(res)
 
@@ -105,8 +72,10 @@ def delete(repo):
 def login(username, password):
     """Log in.Give current credentials.
     """
-    print("hello,word")
-    click.echo("hello_word")
+    res = service.login(S.host,username,password)
+    S.set_token(res)
+    click.echo("OK")
+
 @cli.command()
 @click.option("--username", prompt=True, help="The username.")
 @click.option("--email", prompt="E-mail", help="The user email.")
@@ -132,7 +101,14 @@ def message(message):
     """
     repo message -m Hello_word
     """
-    click.echo(message)
+    is_auth()
+
+    if not S.current_chat:
+        return click.echo("Вы не подписаны ни на один чат\n"
+                          "repo select --help\nили\n"
+                          "repo create --help")
+    res = service.send_message(S.host,message,S.current_chat,S.token)
+    click.echo(res)
 
 @cli.command()
 @click.option(
@@ -147,7 +123,13 @@ def create(name):
     This command create new chat.
     repo create -n Chat1
     """
-    click.echo(name)
+    is_auth()
+
+    res = service.create_room(S.host,name,S.token)
+
+    S.set_current_chat(name[0])
+
+    click.echo(res)
 
 @cli.command()
 @click.option(
@@ -162,10 +144,13 @@ def select(chat_name):
     This command select req chat.
     repo select -c Chat1
     """
-    res = service.select_chat(S.host,chat_name,S.token)
+    is_auth()
+
+    res = service.select_chat(S.host,chat_name[0],S.token)
+
+    S.set_current_chat(chat_name[0])
+
     click.echo(res)
-
-
 
 @cli.command()
 @click.option(
@@ -188,11 +173,18 @@ def refresh():
     This command refresh current chat.
     repo refresh -c Chat1
     """
-    click.echo('qwe')
+    is_auth()
+
+    res = service.select_chat(S.host,S.current_chat,S.token)
+
+
+    click.echo(res)
 
 
 @cli.command()
 def logout():
+    is_auth()
+
     S.set_token('')
     click.echo('ok')
 

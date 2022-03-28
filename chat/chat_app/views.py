@@ -16,7 +16,7 @@ from rest_framework.authtoken.models import Token
 
 
 class RoomListView(APIView):
-    permission_classes = (IsAuthenticated,)
+    #permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         rooms = Room.objects.all()
@@ -30,16 +30,20 @@ class RoomDetailsView(APIView):
         #add list own_tables
 
 
+
         response = get_message(room_name)
         return Response(response.data)
 
 class MessageCreateView(APIView):
-    permission_classes = (IsAuthenticated,)
+    #permission_classes = (IsAuthenticated,)
 
     """Добавление сообщения"""
     def post(self, request,room_name):
         room_id = Room.objects.get(room_name=room_name).id
         request.data['room_name'] = room_id
+        i = Token.objects.get(key=request.data['sender']).user
+        request.data['sender'] = i.username
+
 
         review = MessageCreateSerializer(data=request.data)
         response = get_message(room_name)
@@ -71,7 +75,7 @@ class RegistrationView(APIView):
 
 
 class RoomCreateView(APIView):
-    permission_classes = (IsAuthenticated,)
+    #permission_classes = (IsAuthenticated,)
 
     def post(self, request,):
         room_data = RoomCreateSerializer(data=request.data)
