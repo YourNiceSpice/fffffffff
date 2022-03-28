@@ -1,0 +1,8 @@
+repo.py
+setup.py
+click_example_repo.egg-info/PKG-INFO
+click_example_repo.egg-info/SOURCES.txt
+click_example_repo.egg-info/dependency_links.txt
+click_example_repo.egg-info/entry_points.txt
+click_example_repo.egg-info/requires.txt
+click_example_repo.egg-info/top_level.txt
